@@ -29,18 +29,6 @@ obj-y += booting.o
 FILE_booting.o := booting.html
 FSPATH_booting.o := booting.html
 
-obj-y += initramfs.o
-FILE_initramfs.o := initramfs.html
-FSPATH_initramfs.o := initramfs.html
-
-obj-y += uboot.o
-FILE_uboot.o := uboot.html
-FSPATH_uboot.o := uboot.html
-
-obj-y += factory.o
-FILE_factory.o := factory.html
-FSPATH_factory.o := factory.html
-
 obj-y += 404.o
 FILE_404.o := 404.html
 FSPATH_404.o := 404.html

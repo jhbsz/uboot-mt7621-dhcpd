@@ -241,18 +241,6 @@ done:
 				}
 			}
 
-			/*
-			 * Fix "Proceed" button: change form action from
-			 * /flashing to /flashing.html.  /flashing is not
-			 * a registered URI handler.
-			 */
-			p = strstr(html_buf, "action=\"/flashing\"");
-			if (p) {
-				memmove(p + 22, p + 18,
-					strlen(p + 18) + 1);
-				memcpy(p, "action=\"/flashing.html\"", 22);
-			}
-
 			response->info.content_type = "text/html";
 			response->data = html_buf;
 			response->size = strlen(html_buf);
@@ -435,14 +423,15 @@ int start_web_failsafe(void)
 	httpd_register_uri_handler(inst, "/booting.html", &html_handler, NULL);
 	httpd_register_uri_handler(inst, "/fail.html", &html_handler, NULL);
 	httpd_register_uri_handler(inst, "/flashing.html", &html_handler, NULL);
-	httpd_register_uri_handler(inst, "/factory.html", &html_handler, NULL);
-	httpd_register_uri_handler(inst, "/initramfs.html", &html_handler, NULL);
 	if (IS_ENABLED(CONFIG_FAILSAFE_LEGACY_UI))
 		httpd_register_uri_handler(inst, "/upload.html", &html_handler, NULL);
-	httpd_register_uri_handler(inst, "/uboot.html", &html_handler, NULL);
-	if (!IS_ENABLED(CONFIG_FAILSAFE_LEGACY_MODE))
+	if (!IS_ENABLED(CONFIG_FAILSAFE_LEGACY_UI)) {
+		httpd_register_uri_handler(inst, "/factory.html", &html_handler, NULL);
+		httpd_register_uri_handler(inst, "/initramfs.html", &html_handler, NULL);
+		httpd_register_uri_handler(inst, "/uboot.html", &html_handler, NULL);
 		httpd_register_uri_handler(inst, "/backup.html", &html_handler, NULL);
-	httpd_register_uri_handler(inst, "/reboot.html", &html_handler, NULL);
+		httpd_register_uri_handler(inst, "/reboot.html", &html_handler, NULL);
+	}
 
 	httpd_register_uri_handler(inst, "", &not_found_handler, NULL);
 
