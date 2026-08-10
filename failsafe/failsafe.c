@@ -203,6 +203,64 @@ done:
 	}
 	md5_str[32] = '\0';
 
+#if IS_ENABLED(CONFIG_FAILSAFE_LEGACY_UI)
+	/*
+	 * Legacy UI (fsdata-legacy): return a complete HTML confirmation
+	 * page with MD5/Size filled in and a "Proceed" button.  The new
+	 * UI (fsdata) uses AJAX and does not need this — its main.js
+	 * parses the plain-text response below.
+	 */
+	{
+		const struct fs_desc *tmpl = fs_find_file("upload.html");
+		char size_str[32];
+		char *p;
+
+		if (tmpl) {
+			static char html_buf[2048];
+
+			memcpy(html_buf, tmpl->data, tmpl->size);
+			html_buf[tmpl->size] = '\0';
+
+			/* Replace MD5 placeholder: 32 X's → MD5 hex string */
+			p = strstr(html_buf, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+			if (p)
+				memcpy(p, md5_str, 32);
+
+			/* Replace Size placeholder: 10 Y's → decimal size */
+			snprintf(size_str, sizeof(size_str), "%zu", fw->size);
+			p = strstr(html_buf, "YYYYYYYYYY");
+			if (p) {
+				size_t slen = strlen(size_str);
+
+				if (slen <= 10) {
+					memcpy(p, size_str, slen);
+					memmove(p + slen, p + 10,
+						strlen(p + 10) + 1);
+				} else {
+					memcpy(p, size_str, 10);
+				}
+			}
+
+			/*
+			 * Fix "Proceed" button: change form action from
+			 * /flashing to /flashing.html.  /flashing is not
+			 * a registered URI handler.
+			 */
+			p = strstr(html_buf, "action=\"/flashing\"");
+			if (p) {
+				memmove(p + 22, p + 18,
+					strlen(p + 18) + 1);
+				memcpy(p, "action=\"/flashing.html\"", 22);
+			}
+
+			response->info.content_type = "text/html";
+			response->data = html_buf;
+			response->size = strlen(html_buf);
+			return;
+		}
+	}
+#endif
+
 	snprintf(resp, sizeof(resp), "%zu %s", fw->size, md5_str);
 	response->data = resp;
 	response->size = strlen(resp);
@@ -379,6 +437,8 @@ int start_web_failsafe(void)
 	httpd_register_uri_handler(inst, "/flashing.html", &html_handler, NULL);
 	httpd_register_uri_handler(inst, "/factory.html", &html_handler, NULL);
 	httpd_register_uri_handler(inst, "/initramfs.html", &html_handler, NULL);
+	if (IS_ENABLED(CONFIG_FAILSAFE_LEGACY_UI))
+		httpd_register_uri_handler(inst, "/upload.html", &html_handler, NULL);
 	httpd_register_uri_handler(inst, "/uboot.html", &html_handler, NULL);
 	if (!IS_ENABLED(CONFIG_FAILSAFE_LEGACY_MODE))
 		httpd_register_uri_handler(inst, "/backup.html", &html_handler, NULL);
