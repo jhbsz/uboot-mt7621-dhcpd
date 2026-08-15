@@ -23,13 +23,17 @@ config NETCONSOLE
 	  See README.NetConsole for details.
 
 config TCP
-	bool
+	bool "Enable Mediatek TCP framework"
 	default n
+	help
+	  Enable Mediatek TCP framework that allows some customized features.
 
 config HTTPD
-	bool
+	bool "Enable Mediatek HTTPD framework"
 	default n
 	depends on TCP
+	help
+	  Enable Mediatek HTTPD framework that allows some customized features.
 
 config MTK_DHCPD
 	bool "Minimal DHCP server for MediaTek web failsafe"
